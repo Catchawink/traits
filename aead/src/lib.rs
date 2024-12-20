@@ -48,7 +48,7 @@ use bytes::BytesMut;
 #[cfg(feature = "getrandom")]
 use crypto_common::getrandom;
 #[cfg(feature = "rand_core")]
-use rand_core::CryptoRngCore;
+use rand_core::{CryptoRng, TryRngCore};
 
 /// Error type.
 ///
@@ -141,13 +141,13 @@ pub trait AeadCore {
     /// random nonces.
     #[cfg(feature = "rand_core")]
     fn generate_nonce_with_rng(
-        rng: &mut impl CryptoRngCore,
-    ) -> core::result::Result<Nonce<Self>, rand_core::Error>
+        rng: &mut impl CryptoRng,
+    ) -> core::result::Result<Nonce<Self>, rand_core::OsError>
     where
         Nonce<Self>: Default,
     {
         let mut nonce = Nonce::<Self>::default();
-        rng.try_fill_bytes(&mut nonce)?;
+        rng.try_fill_bytes(&mut nonce).expect("Failed to fill bytes! This is a hack for Esp32.");
         Ok(nonce)
     }
 }

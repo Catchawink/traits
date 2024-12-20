@@ -27,7 +27,7 @@ use hybrid_array::{
 };
 
 #[cfg(feature = "rand_core")]
-use rand_core::CryptoRngCore;
+use rand_core::{CryptoRng, TryRngCore};
 
 /// Block on which [`BlockSizeUser`] implementors operate.
 pub type Block<B> = Array<u8, <B as BlockSizeUser>::BlockSize>;
@@ -183,9 +183,9 @@ pub trait KeyInit: KeySizeUser + Sized {
     /// Generate random key using the provided [`CryptoRngCore`].
     #[cfg(feature = "rand_core")]
     #[inline]
-    fn generate_key_with_rng(rng: &mut impl CryptoRngCore) -> Result<Key<Self>, rand_core::Error> {
+    fn generate_key_with_rng(rng: &mut impl CryptoRng) -> Result<Key<Self>, rand_core::OsError> {
         let mut key = Key::<Self>::default();
-        rng.try_fill_bytes(&mut key)?;
+        rng.try_fill_bytes(&mut key).expect("Failed to fill bytes! This is a hack for Esp32.");
         Ok(key)
     }
 }
@@ -200,7 +200,7 @@ pub trait KeyIvInit: KeySizeUser + IvSizeUser + Sized {
     fn new_from_slices(key: &[u8], iv: &[u8]) -> Result<Self, InvalidLength> {
         let key = <&Key<Self>>::try_from(key).map_err(|_| InvalidLength)?;
         let iv = <&Iv<Self>>::try_from(iv).map_err(|_| InvalidLength)?;
-        Ok(Self::new(key, iv))
+        Ok(KeyIvInit::new(key, iv))
     }
 
     /// Generate random key using the operating system's secure RNG.
@@ -215,9 +215,9 @@ pub trait KeyIvInit: KeySizeUser + IvSizeUser + Sized {
     /// Generate random key using the provided [`CryptoRngCore`].
     #[cfg(feature = "rand_core")]
     #[inline]
-    fn generate_key_with_rng(rng: &mut impl CryptoRngCore) -> Result<Key<Self>, rand_core::Error> {
+    fn generate_key_with_rng(rng: &mut impl CryptoRng) -> Result<Key<Self>, rand_core::OsError> {
         let mut key = Key::<Self>::default();
-        rng.try_fill_bytes(&mut key)?;
+        rng.try_fill_bytes(&mut key).expect("Failed to fill bytes! This is a hack for Esp32.");
         Ok(key)
     }
 
@@ -233,9 +233,9 @@ pub trait KeyIvInit: KeySizeUser + IvSizeUser + Sized {
     /// Generate random IV using the provided [`CryptoRngCore`].
     #[cfg(feature = "rand_core")]
     #[inline]
-    fn generate_iv_with_rng(rng: &mut impl CryptoRngCore) -> Result<Iv<Self>, rand_core::Error> {
+    fn generate_iv_with_rng(rng: &mut impl CryptoRng) -> Result<Iv<Self>, rand_core::OsError> {
         let mut iv = Iv::<Self>::default();
-        rng.try_fill_bytes(&mut iv)?;
+        rng.try_fill_bytes(&mut iv).expect("Failed to fill bytes! This is a hack for Esp32.");
         Ok(iv)
     }
 
@@ -252,8 +252,8 @@ pub trait KeyIvInit: KeySizeUser + IvSizeUser + Sized {
     #[cfg(feature = "rand_core")]
     #[inline]
     fn generate_key_iv_with_rng(
-        rng: &mut impl CryptoRngCore,
-    ) -> Result<(Key<Self>, Iv<Self>), rand_core::Error> {
+        rng: &mut impl CryptoRng,
+    ) -> Result<(Key<Self>, Iv<Self>), rand_core::OsError> {
         let key = Self::generate_key_with_rng(rng)?;
         let iv = Self::generate_iv_with_rng(rng)?;
         Ok((key, iv))
@@ -295,9 +295,9 @@ pub trait InnerIvInit: InnerUser + IvSizeUser + Sized {
     /// Generate random IV using the provided [`CryptoRngCore`].
     #[cfg(feature = "rand_core")]
     #[inline]
-    fn generate_iv_with_rng(rng: &mut impl CryptoRngCore) -> Result<Iv<Self>, rand_core::Error> {
+    fn generate_iv_with_rng(rng: &mut impl CryptoRng) -> Result<Iv<Self>, rand_core::OsError> {
         let mut iv = Iv::<Self>::default();
-        rng.try_fill_bytes(&mut iv)?;
+        rng.try_fill_bytes(&mut iv).expect("Failed to fill bytes! This is a hack for Esp32.");
         Ok(iv)
     }
 }
