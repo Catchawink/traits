@@ -130,7 +130,7 @@ pub trait AeadCore {
         Nonce<Self>: Default,
     {
         let mut nonce = Nonce::<Self>::default();
-        getrandom::getrandom(&mut nonce)?;
+        getrandom::fill(&mut nonce)?;
         Ok(nonce)
     }
 
